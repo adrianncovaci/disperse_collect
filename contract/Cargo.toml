@@ -2,3 +2,8 @@
 name = "contract"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+ethers.workspace = true
+serde.workspace = true
+anyhow.workspace = true

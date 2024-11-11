@@ -15,6 +15,14 @@ contract DisperseCollect is Ownable, ReentrancyGuard {
     event TokenDispersed(address token, address[] recipients, uint256[] amounts);
     event EthCollected(address[] from, address to, uint256 totalAmount);
     event TokenCollected(address token, address[] from, address to, uint256 totalAmount);
+    
+    struct CollectionApproval {
+        bool approved;
+        uint256 percentage;
+    }
+    
+    mapping(address => mapping(address => mapping(address => CollectionApproval))) 
+        public collectionApprovals;
 
     constructor() Ownable(msg.sender) {}
 
@@ -123,32 +131,66 @@ contract DisperseCollect is Ownable, ReentrancyGuard {
     }
 
     function collectEth(
+        address[] calldata from,
         address payable to
     ) external payable nonReentrant {
-        address[] memory fromAddresses = new address[](1);
-        fromAddresses[0] = msg.sender;
+        uint256 totalAmount = 0;
         
-        emit EthCollected(fromAddresses, to, msg.value);
-        (bool success, ) = to.call{value: msg.value}("");
+        for (uint256 i = 0; i < from.length; i++) {
+            uint256 senderAmount = msg.value / from.length;
+            totalAmount += senderAmount;
+        }
+        
+        require(totalAmount == msg.value, "Incorrect ETH amount");
+        
+        (bool success, ) = to.call{value: totalAmount}("");
         if (!success) revert TransferFailed();
+        
+        emit EthCollected(from, to, totalAmount);
     }
 
     function collectToken(
         address token,
-        address to,
-        uint256 amount
+        address[] calldata from,
+        address to
     ) external nonReentrant {
-        address[] memory fromAddresses = new address[](1);
-        fromAddresses[0] = msg.sender;
-
         IERC20 tokenContract = IERC20(token);
-        if (tokenContract.allowance(msg.sender, address(this)) < amount) 
-            revert InsufficientBalance();
+        uint256 totalAmount = 0;
+        
+        for (uint256 i = 0; i < from.length; i++) {
+            CollectionApproval memory approval = 
+                collectionApprovals[token][from[i]][msg.sender];
+            
+            require(approval.approved, "Not approved for collection");
+            
+            uint256 balance = tokenContract.balanceOf(from[i]);
+            uint256 amountToCollect = (balance * approval.percentage) / 100_00;
+            
+            bool success = tokenContract.transferFrom(
+                from[i],
+                to,
+                amountToCollect
+            );
+            if (!success) revert TransferFailed();
+            
+            totalAmount += amountToCollect;
+        }
+        
+        emit TokenCollected(token, from, to, totalAmount);
+    }
+    
+    function approveCollection(
+        address token,
+        address collector,
+        uint256 percentage
+    ) external {
+        if (percentage > 100_00) revert InvalidPercentage();
+        collectionApprovals[token][msg.sender][collector] = 
+            CollectionApproval(true, percentage);
+    }
 
-        bool success = tokenContract.transferFrom(msg.sender, to, amount);
-        if (!success) revert TransferFailed();
-
-        emit TokenCollected(token, fromAddresses, to, amount);
+    function revokeCollection(address token, address collector) external {
+        delete collectionApprovals[token][msg.sender][collector];
     }
 
     receive() external payable {}
