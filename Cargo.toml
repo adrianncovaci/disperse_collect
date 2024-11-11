@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "api",
+    "contract"
+]
+
+[workspace.dependencies]
+tokio = { version = "1.0", features = ["full"] }
+ethers = { version = "2.0", features = ["legacy"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
