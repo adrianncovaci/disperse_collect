@@ -13,6 +13,7 @@ pub struct CollectTokenRequest {
     pub token: Address,
     pub from: Vec<Address>,
     pub to: Address,
+    pub amount: U256,
 }
 
 #[derive(Debug, Deserialize)]
