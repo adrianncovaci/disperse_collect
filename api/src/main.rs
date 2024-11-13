@@ -11,9 +11,15 @@ use contract::DisperseContract;
 use self::{
     error::ApiError,
     models::{
-        ApiResponse, ApproveCollectionRequest, CollectEthRequest, CollectTokenRequest,
-        DisperseEthPercentageRequest, DisperseEthRequest, DisperseResponse,
-        DisperseTokenPercentageRequest, DisperseTokenRequest, RevokeCollectionRequest,
+        collect::{
+            ApproveCollectionRequest, CollectEthRequest, CollectTokenRequest,
+            RevokeCollectionRequest,
+        },
+        disperse::{
+            DisperseEthPercentageRequest, DisperseEthRequest, DisperseTokenPercentageRequest,
+            DisperseTokenRequest,
+        },
+        response::{ApiResponse, DisperseResponse},
     },
 };
 
