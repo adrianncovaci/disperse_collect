@@ -8,16 +8,13 @@ use self::handlers::{
     disperse::{
         disperse_eth, disperse_eth_by_percentage, disperse_token, disperse_token_by_percentage,
     },
+    utils::health_check,
 };
 
 pub mod disperse_client;
 pub mod error;
 pub mod handlers;
 pub mod models;
-
-async fn health_check() -> &'static str {
-    "OK"
-}
 
 #[tokio::main]
 async fn main() {
